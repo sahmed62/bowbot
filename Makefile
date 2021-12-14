@@ -11,23 +11,28 @@ BINDIR := $(ROOTDIR)/bin
 CC     :=gcc
 CFLAGS :=-I$(INCDIR) -Wall -Wextra -Wpedantic
 
-DEPS :=$(wildcard $(INCDIR)/*.h $(SRCDIR)/*.c)
-
 COMMON_SRC := $(SRCDIR)/bow.c
 
-BINS := $(BINDIR)/bow-bin-to-txt \
-        $(BINDIR)/bow-txt-to-bin
+DEPS :=$(wildcard $(INCDIR)/*.h $(COMMON_SRC))
+
+BINS := $(BINDIR)/bow-bin-to-txt            \
+        $(BINDIR)/bow-txt-to-bin            \
+        $(BINDIR)/bow-bin-count-histogram   \
 
 all: $(BINS)
 
 clean:
 	rm -r $(BINDIR)
 
-$(BINDIR)/bow-bin-to-txt: $(DEPS)
+$(BINDIR)/bow-bin-to-txt: $(SRCDIR)/bow-bin-to-txt.c $(DEPS)
 	mkdir -p $(BINDIR)
-	$(CC) -o $@ $(CFLAGS) $(SRCDIR)/bow-bin-to-txt.c $(COMMON_SRC)
+	$(CC) -o $@ $(CFLAGS) $< $(COMMON_SRC)
 
-$(BINDIR)/bow-txt-to-bin: $(DEPS)
+$(BINDIR)/bow-txt-to-bin: $(SRCDIR)/bow-txt-to-bin.c $(DEPS)
 	mkdir -p $(BINDIR)
-	$(CC) -o $@ $(CFLAGS) $(SRCDIR)/bow-txt-to-bin.c $(COMMON_SRC)
+	$(CC) -o $@ $(CFLAGS) $< $(COMMON_SRC)
+
+$(BINDIR)/bow-bin-count-histogram: $(SRCDIR)/bow-bin-count-histogram.c $(DEPS)
+	mkdir -p $(BINDIR)
+	$(CC) -o $@ $(CFLAGS) $< $(COMMON_SRC)
 
