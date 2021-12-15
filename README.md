@@ -1,4 +1,4 @@
-# Bag-of-Words Probability Model
+# Bag-of-Words Bag-of-Tools
 
 The goal of this project is to perform simple analysis of bag-of-words data from the UCI Machine Learning Repository [1].
 
