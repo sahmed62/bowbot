@@ -9,7 +9,7 @@ SRCDIR := $(ROOTDIR)/src
 BINDIR := $(ROOTDIR)/bin
 
 CC     :=gcc
-CFLAGS :=-I$(INCDIR) -Wall -Wextra -Wpedantic
+CFLAGS :=-I$(INCDIR) -Wall -Wextra -Wpedantic -g
 
 COMMON_SRC := $(SRCDIR)/bow.c
 
@@ -18,6 +18,7 @@ DEPS :=$(wildcard $(INCDIR)/*.h $(COMMON_SRC))
 BINS := $(BINDIR)/bow-bin-to-txt            \
         $(BINDIR)/bow-txt-to-bin            \
         $(BINDIR)/bow-bin-count-histogram   \
+        $(BINDIR)/bow-bin-marginal-histogram
 
 all: $(BINS)
 
@@ -36,3 +37,6 @@ $(BINDIR)/bow-bin-count-histogram: $(SRCDIR)/bow-bin-count-histogram.c $(DEPS)
 	mkdir -p $(BINDIR)
 	$(CC) -o $@ $(CFLAGS) $< $(COMMON_SRC)
 
+$(BINDIR)/bow-bin-marginal-histogram: $(SRCDIR)/bow-bin-marginal-histogram.c $(DEPS)
+	mkdir -p $(BINDIR)
+	$(CC) -o $@ $(CFLAGS) $< $(COMMON_SRC)

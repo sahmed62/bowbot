@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <stdint.h>
 
+extern int
+strtouint32 (   const char  *str,
+                char        **endptr_p,
+                uint32_t    *out_p);
+
 /*  magic number: "BOW\0" in little-endian byte order */
 #define BOW_MAGIC 0x00574F42
 
@@ -72,10 +77,10 @@ fread_bow_header_bin (  FILE*           filep,
                         bow_header_t    *header_out_p); */
 
 #define fread_bow_header_bin(filep, header_out_p)   \
-        ((1 == fread (  header_out_p,               \
+        (((1 == fread ( header_out_p,               \
                         sizeof(bow_header_t),       \
                         1,                          \
-                        filep))? 0 : -1)
+                        filep)) && (BOW_MAGIC == (header_out_p)->MAGIC)) ? 0 : -1)
 
 /*extern int
 fwrite_bow_header_bin ( FILE*           filep,
@@ -107,6 +112,29 @@ fwrite_bow_record_bin ( FILE*           filep,
                         sizeof(bow_record_t),       \
                         1,                          \
                         filep))? 0 : -1)
+
+typedef struct {
+    FILE*           filep;
+    bow_header_t    header;
+    uint32_t        r;
+    uint32_t        filled;
+    uint32_t        i;
+    bow_record_t    block[512];
+} bow_stream_t;
+
+extern int
+fopen_bow_stream (  const char      *src_filename,
+                    bow_stream_t    *ctx_p);
+
+#define bow_stream_notempty(ctx_p) \
+        ((ctx_p)->r <= (ctx_p)->header.record_count)
+
+extern int
+fgetrecord_bow_stream ( bow_stream_t        *ctx_p,
+                        const bow_record_t  **record_pp);
+
+extern void
+fclose_bow_stream (bow_stream_t *ctx_p);
 
 #endif
 

@@ -1,19 +1,20 @@
 /*  Copyright 2021 Safayet N Ahmed */
 
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 #include <bow.h>
 
-static int
+int
 strtouint32 (   const char  *str,
                 char        **endptr_p,
                 uint32_t    *out_p)
 {
     int ret;
-    long int conv; 
+    long int conv;
     char *endptr;
-    
+
     errno = 0;
     conv = strtol (str, &endptr, 0);
     if (0 != errno) {
@@ -30,7 +31,7 @@ strtouint32 (   const char  *str,
             ret = 0;
         }
     }
-    
+
     return ret;
 }
 
@@ -79,7 +80,7 @@ getline_bow_header_txt (FILE*           filep,
                         } else {
                             header_out_p->MAGIC = BOW_MAGIC;
                         }
-                    }                
+                    }
                 }
             }
         }
@@ -131,5 +132,89 @@ getline_bow_record_txt (FILE*           filep,
     }
 
     return ret;
+}
+
+int
+fopen_bow_stream (  const char      *src_filename,
+                    bow_stream_t    *ctx_p)
+{
+    int ret;
+    FILE* filep;
+
+    filep = fopen(src_filename, "r");
+    if (NULL == filep) {
+        perror ("fopen_bow_docstream: fopen failed");
+        ret = -1;
+    } else {
+        ret = fread_bow_header_bin(filep, &(ctx_p->header));
+        if (ret < 0) {
+            perror ("fopen_bow_docstream: fread_bow_header_bin failed");
+            ret = -1;
+        } else {
+            ctx_p->filep      = filep;
+            /*  record ids and document ids begin at 1 */
+            ctx_p->r          = 1;
+            ctx_p->filled     = 0;
+            /*  indices begin at 1 */
+            ctx_p->i          = 0;
+
+            ret = 0;
+        }
+
+        if (-1 == ret) {
+            fclose (filep);
+        }
+    }
+
+    return ret;
+}
+
+int
+fgetrecord_bow_stream ( bow_stream_t        *ctx_p,
+                        const bow_record_t  **record_pp)
+{
+    int ret;
+
+    /*  check we haven't exhausted the document */
+    if (!bow_stream_notempty(ctx_p)) {
+        fprintf (   stderr,
+                    "getdoc_bow_docstream: returned all %u records\n",
+                    (unsigned)ctx_p->header.record_count);
+        ret = -1;
+    } else {
+        /* refill the block if needed */
+        if (ctx_p->i >= ctx_p->filled) {
+            ret = fread (   ctx_p->block,               \
+                            sizeof(bow_record_t),       \
+                            512,                        \
+                            ctx_p->filep);
+            if (ret < 0) {
+                perror ("getdoc_bow_docstream: fread failed");
+                ret = -1;
+            } else {
+                ctx_p->filled = ret;
+                ctx_p->i = 0;
+                ret = 0;
+            }
+        }
+
+        if (0 == ret) {
+            *record_pp = &(ctx_p->block[ctx_p->i]);
+            ctx_p->i++;
+            ctx_p->r++;
+        }
+    }
+
+    return ret;
+}
+
+void
+fclose_bow_stream (bow_stream_t *ctx_p)
+{
+    fclose (ctx_p->filep);
+    /* zeroise (initialize) the bowdoc array */
+    memset (ctx_p,
+            0,
+            sizeof(bow_stream_t));
 }
 
